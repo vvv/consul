@@ -662,7 +662,7 @@ func TestUIGatewayServiceNodes_Ingress(t *testing.T) {
 		{
 			Name: "web",
 			GatewayConfig: GatewayConfig{
-				Addresses: []string{":8080", "*.test.example.com:8081"},
+				Addresses: []string{"web.ingress.dc1.consul.:8080", "*.test.example.com:8081"},
 			},
 			EnterpriseMeta: *structs.DefaultEnterpriseMeta(),
 		},
@@ -674,7 +674,7 @@ func TestUIGatewayServiceNodes_Ingress(t *testing.T) {
 			ChecksPassing:  1,
 			ChecksWarning:  1,
 			ChecksCritical: 0,
-			GatewayConfig:  GatewayConfig{Addresses: []string{":8888"}},
+			GatewayConfig:  GatewayConfig{Addresses: []string{"db.ingress.dc1.consul.:8888"}},
 			EnterpriseMeta: *structs.DefaultEnterpriseMeta(),
 		},
 	}

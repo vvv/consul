@@ -376,13 +376,13 @@ type GatewayService struct {
 
 type GatewayServices []*GatewayService
 
-func (g *GatewayService) Addresses() []string {
+func (g *GatewayService) Addresses(defaultHost string) []string {
 	if g.Port == 0 {
 		return nil
 	}
 
 	if len(g.Hosts) == 0 {
-		return []string{fmt.Sprintf(":%d", g.Port)}
+		return []string{fmt.Sprintf("%s:%d", defaultHost, g.Port)}
 	}
 
 	var addresses []string

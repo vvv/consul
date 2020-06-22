@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/consul/agent/config"
 	"github.com/hashicorp/consul/agent/structs"
 	"github.com/hashicorp/consul/api"
 )
@@ -163,7 +164,7 @@ RPC:
 
 	// Generate the summary
 	// TODO (gateways) (freddy) Have Internal.ServiceDump return ServiceDump instead. Need to add bexpr filtering for type.
-	return summarizeServices(out.Nodes.ToServiceDump()), nil
+	return summarizeServices(out.Nodes.ToServiceDump(), s.agent.config), nil
 }
 
 // UIGatewayServices is used to query all the nodes for services associated with a gateway along with their gateway config
@@ -197,10 +198,11 @@ RPC:
 		}
 		return nil, err
 	}
-	return summarizeServices(out.Dump), nil
+
+	return summarizeServices(out.Dump, s.agent.config), nil
 }
 
-func summarizeServices(dump structs.ServiceDump) []*ServiceSummary {
+func summarizeServices(dump structs.ServiceDump, cfg *config.RuntimeConfig) []*ServiceSummary {
 	// Collect the summary information
 	var services []structs.ServiceID
 	summary := make(map[structs.ServiceID]*ServiceSummary)
@@ -222,8 +224,15 @@ func summarizeServices(dump structs.ServiceDump) []*ServiceSummary {
 
 	for _, csn := range dump {
 		if csn.GatewayService != nil {
-			sum := getService(csn.GatewayService.Service.ToServiceID())
-			for _, addr := range csn.GatewayService.Addresses() {
+			gwsvc := csn.GatewayService
+			sum := getService(gwsvc.Service.ToServiceID())
+			ingressDNS := serviceIngressDNSName(
+				gwsvc.Service.Name,
+				cfg.Datacenter,
+				cfg.DNSDomain,
+				&gwsvc.Service.EnterpriseMeta,
+			)
+			for _, addr := range gwsvc.Addresses(ingressDNS) {
 				// check for duplicates, a service will have a ServiceInfo struct for
 				// every instance that is registered.
 				if _, ok := sum.GatewayConfig.addressesSet[addr]; !ok {
